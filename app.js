@@ -1,33 +1,34 @@
 /**
  * Zayd — Minimal ChatGPT-style UI (Compact & Embedded)
- * Client Logic
+ * Client Logic:
+ * - 1 isolated session per user (not shared)
+ * - Refreshing the page refreshes/resets the session
+ * - Auto-refreshes to a new session every 5 chats
  */
 
 const CONFIG = {
   ENDPOINT: 'https://axyxymxrxyrpcnjfnrev.supabase.co/functions/v1/nadi-chat',
   BOT_SLUG: 'zayd',
-  STORAGE_KEYS: {
-    CONVERSATION_ID: 'nadi_chat_conv_id',
-    MESSAGES: 'nadi_chat_messages'
-  }
+  MAX_CHATS_PER_SESSION: 5
 };
 
 class MinimalChatApp {
   constructor() {
-    this.conversationId = localStorage.getItem(CONFIG.STORAGE_KEYS.CONVERSATION_ID) || null;
-    this.messages = this.loadMessages();
+    // Clear any legacy persistent storage so refresh always starts fresh
+    localStorage.removeItem('nadi_chat_conv_id');
+    localStorage.removeItem('nadi_chat_messages');
+    localStorage.removeItem('nadi_chat_sessions');
+    localStorage.removeItem('nadi_chat_active_id');
+
+    // Fresh session in runtime memory
+    this.conversationId = null;
+    this.messages = [];
+    this.chatCount = 0;
     this.isGenerating = false;
 
     this.initElements();
     this.initEventListeners();
-
-    if (this.messages.length > 0) {
-      this.showEmptyState(false);
-      this.messages.forEach(msg => this.renderMessage(msg, false));
-      this.scrollToBottom(false);
-    } else {
-      this.showEmptyState(true);
-    }
+    this.showEmptyState(true);
 
     lucide.createIcons();
   }
@@ -47,7 +48,7 @@ class MinimalChatApp {
   initEventListeners() {
     // New Chat Header Button
     if (this.newChatHeaderBtn) {
-      this.newChatHeaderBtn.addEventListener('click', () => this.startNewChat());
+      this.newChatHeaderBtn.addEventListener('click', () => this.startNewSession(true));
     }
 
     // Input handlers
@@ -63,7 +64,7 @@ class MinimalChatApp {
 
     this.sendBtn.addEventListener('click', () => this.submitMessage());
 
-    // Quick Prompts
+    // Quick Prompts in Empty State
     document.querySelectorAll('.quick-prompt-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const prompt = btn.getAttribute('data-prompt');
@@ -85,31 +86,17 @@ class MinimalChatApp {
     this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 160) + 'px';
   }
 
-  loadMessages() {
-    try {
-      return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.MESSAGES)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  saveMessages() {
-    localStorage.setItem(CONFIG.STORAGE_KEYS.MESSAGES, JSON.stringify(this.messages));
-    if (this.conversationId) {
-      localStorage.setItem(CONFIG.STORAGE_KEYS.CONVERSATION_ID, this.conversationId);
-    }
-  }
-
-  startNewChat() {
+  startNewSession(notify = false) {
     this.conversationId = null;
     this.messages = [];
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.CONVERSATION_ID);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.MESSAGES);
+    this.chatCount = 0;
     this.messagesFeed.innerHTML = '';
     this.showEmptyState(true);
     this.messageInput.value = '';
     this.handleInputChange();
-    this.showToast('New session started');
+    if (notify) {
+      this.showToast('New session started');
+    }
   }
 
   showEmptyState(show) {
@@ -124,9 +111,17 @@ class MinimalChatApp {
     const text = this.messageInput.value.trim();
     if (!text || this.isGenerating) return;
 
+    // Check if session reached the 5-chat limit; if so, rollover to a fresh session
+    if (this.chatCount >= CONFIG.MAX_CHATS_PER_SESSION) {
+      this.startNewSession(false);
+      this.showToast('5-chat limit reached. Started fresh session.');
+    }
+
     this.showEmptyState(false);
     this.messageInput.value = '';
     this.handleInputChange();
+
+    this.chatCount++;
 
     // User message
     const userMsg = {
@@ -135,7 +130,6 @@ class MinimalChatApp {
     };
     this.messages.push(userMsg);
     this.renderMessage(userMsg, true);
-    this.saveMessages();
 
     // Call Supabase Edge Function
     await this.callEdgeFunction(text);
@@ -153,6 +147,7 @@ class MinimalChatApp {
         bot_slug: CONFIG.BOT_SLUG
       };
 
+      // Only pass conversation_id if within the current active session
       if (this.conversationId) {
         payload.conversation_id = this.conversationId;
       }
@@ -180,8 +175,12 @@ class MinimalChatApp {
       };
 
       this.messages.push(assistantMsg);
-      this.saveMessages();
       this.renderMessage(assistantMsg, true);
+
+      // If user has reached the 5th chat of this session, show rollover notice
+      if (this.chatCount >= CONFIG.MAX_CHATS_PER_SESSION) {
+        this.renderSessionLimitNotice();
+      }
 
     } catch (err) {
       const errorMsg = {
@@ -196,6 +195,16 @@ class MinimalChatApp {
       this.typingIndicator.classList.add('hidden');
       this.scrollToBottom(true);
     }
+  }
+
+  renderSessionLimitNotice() {
+    const notice = document.createElement('div');
+    notice.className = 'session-limit-pill';
+    notice.innerHTML = `
+      <span>Session completed (5/5 chats). Next message will start a fresh session.</span>
+    `;
+    this.messagesFeed.appendChild(notice);
+    this.scrollToBottom(true);
   }
 
   renderMessage(msg, scroll = true) {
