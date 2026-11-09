@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zayd — NADI AI Concierge</title>
+  <meta name="description" content="Meet Zayd, the official AI Concierge for NADI. Discover how NADI integrates AI agents into your existing business workflows.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23111820'/><path d='M25 75V25h12l25 35V25h13v50H63L38 40v35H25z' fill='%23C6F36B'/></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Markdown & Highlighting -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.2/dist/purify.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <div class="app-container">
+    
+    <!-- Sidebar / Drawer -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="https://nadi.framer.website" target="_blank" rel="noopener" class="brand-link" title="Visit NADI Website">
+          <div class="brand-logo-mark">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="10" fill="#151C24"/>
+              <path d="M10 30V10H16L26 24V10H30V30H24L14 16V30H10Z" fill="#C6F36B"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">NADI</span>
+            <span class="brand-badge">CONCIERGE</span>
+          </div>
+        </a>
+        <button class="btn-icon mobile-only" id="closeSidebarBtn" title="Close Sidebar">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="btn-new-chat" id="newChatBtn">
+          <i data-lucide="plus"></i>
+          <span>New Session</span>
+        </button>
+      </div>
+
+      <div class="sidebar-history-container">
+        <div class="history-label">
+          <span>Recent Conversations</span>
+          <button class="btn-ghost-sm" id="clearAllHistoryBtn" title="Clear all history">Clear</button>
+        </div>
+        <div class="history-list" id="historyList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="framework-card">
+          <div class="framework-header">
+            <i data-lucide="layers" class="accent-icon"></i>
+            <span>NADI Method</span>
+          </div>
+          <div class="framework-steps">
+            <span class="step-pill">1. Understand</span>
+            <span class="step-arrow">→</span>
+            <span class="step-pill">2. Design</span>
+            <span class="step-arrow">→</span>
+            <span class="step-pill">3. Integrate</span>
+            <span class="step-arrow">→</span>
+            <span class="step-pill">4. Validate</span>
+            <span class="step-arrow">→</span>
+            <span class="step-pill">5. Improve</span>
+          </div>
+        </div>
+
+        <div class="sidebar-user-links">
+          <button class="btn-footer-link" id="openSettingsBtn">
+            <i data-lucide="settings"></i>
+            <span>Settings & Diagnostics</span>
+          </button>
+          <a href="https://nadi.framer.website" target="_blank" rel="noopener" class="btn-footer-link">
+            <i data-lucide="external-link"></i>
+            <span>nadi.framer.website</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Chat Workspace -->
+    <main class="main-content">
+      
+      <!-- Top Navbar -->
+      <header class="top-nav">
+        <div class="nav-left">
+          <button class="btn-icon mobile-only" id="toggleSidebarBtn" title="Open Menu">
+            <i data-lucide="menu"></i>
+          </button>
+          
+          <div class="agent-identity">
+            <div class="agent-avatar">
+              <span class="avatar-letter">Z</span>
+              <span class="status-indicator-dot online"></span>
+            </div>
+            <div class="agent-info">
+              <div class="agent-title-row">
+                <h1 class="agent-name">Zayd</h1>
+                <span class="tag-role">NADI AI Concierge</span>
+              </div>
+              <div class="agent-specs-row">
+                <span class="status-text">DeepSeek v4.1 Flash</span>
+                <span class="specs-separator">•</span>
+                <span class="status-text">RootSys Runtime</span>
+                <span class="specs-separator">•</span>
+                <span class="status-text">Edge Node (ap-southeast-1)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <button class="btn-icon" id="soundToggleBtn" title="Toggle audio responses">
+            <i data-lucide="volume-2" id="soundIcon"></i>
+          </button>
+          <button class="btn-icon" id="exportChatBtn" title="Export conversation as Markdown">
+            <i data-lucide="download"></i>
+          </button>
+          <button class="btn-icon" id="resetCurrentChatBtn" title="Clear current chat">
+            <i data-lucide="trash-2"></i>
+          </button>
+          <a href="https://github.com/acestraxionweb/nadi-ai-concierge" target="_blank" rel="noopener" class="btn-icon" title="View Source on GitHub">
+            <i data-lucide="github"></i>
+          </a>
+        </div>
+      </header>
+
+      <!-- Chat Messages Scroll Area -->
+      <section class="messages-container" id="messagesContainer">
+        
+        <!-- Welcome Hero View (Displayed when no messages) -->
+        <div class="welcome-hero" id="welcomeHero">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            <span>SYSTEMS INTEGRATION AGENCY</span>
+          </div>
+
+          <div class="hero-logo-wrapper">
+            <img src="assets/nadi-logo-black.png" alt="NADI Logo" class="hero-brand-logo" onerror="this.style.display='none'">
+          </div>
+
+          <h2 class="hero-heading">Your workflow. AI that fits.</h2>
+          <p class="hero-description">
+            I am <strong>Zayd</strong>, your NADI AI Concierge. I'm here to explain how NADI connects custom AI agents around your existing tools, data, and human checkpoints — without forcing you to remodel your business.
+          </p>
+
+          <div class="hero-capabilities-grid">
+            <div class="capability-card">
+              <div class="card-icon"><i data-lucide="git-merge"></i></div>
+              <h3>Workflow First</h3>
+              <p>We begin with how your team operates, identifying manual friction before prescribing technology.</p>
+            </div>
+            <div class="capability-card">
+              <div class="card-icon"><i data-lucide="cpu"></i></div>
+              <h3>Connected Action</h3>
+              <p>AI that retrieves context, drafts work, and coordinates steps across your current software stack.</p>
+            </div>
+            <div class="capability-card">
+              <div class="card-icon"><i data-lucide="shield-check"></i></div>
+              <h3>Practical Control</h3>
+              <p>Strict permission boundaries, human approvals for high-stakes steps, and transparent audit trails.</p>
+            </div>
+          </div>
+
+          <div class="hero-prompts-section">
+            <p class="prompts-heading">Select a topic to start our conversation:</p>
+            <div class="prompt-chips-grid">
+              <button class="prompt-chip" data-prompt="How does NADI integrate AI into existing workflows?">
+                <i data-lucide="workflow"></i>
+                <span>How does NADI integrate AI into existing workflows?</span>
+              </button>
+              <button class="prompt-chip" data-prompt="What business operations can NADI help automate?">
+                <i data-lucide="sparkles"></i>
+                <span>What business operations can NADI help automate?</span>
+              </button>
+              <button class="prompt-chip" data-prompt="How do human approval checkpoints work in your systems?">
+                <i data-lucide="user-check"></i>
+                <span>How do human approval checkpoints work in your systems?</span>
+              </button>
+              <button class="prompt-chip" data-prompt="I would like to discuss an AI integration project for my company.">
+                <i data-lucide="message-square"></i>
+                <span>I would like to discuss an AI integration project.</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Stream will be rendered here -->
+        <div class="messages-feed" id="messagesFeed"></div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator-row hidden" id="typingIndicator">
+          <div class="assistant-avatar-small">Z</div>
+          <div class="typing-bubble">
+            <span class="typing-label">Zayd is thinking</span>
+            <div class="typing-dots">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Input Bar Footer -->
+      <footer class="composer-container">
+        
+        <!-- Suggested Follow-ups Pill Row (Contextual) -->
+        <div class="suggested-chips-bar hidden" id="suggestedChipsBar">
+          <span class="chips-title">Suggested:</span>
+          <div class="chips-wrapper" id="chipsWrapper"></div>
+        </div>
+
+        <form class="composer-form" id="composerForm">
+          <div class="input-card">
+            <textarea 
+              id="messageInput" 
+              class="composer-textarea" 
+              rows="1" 
+              placeholder="Ask Zayd about NADI integrations, workflow mapping, or agent architecture..." 
+              maxlength="6000"
+              autofocus
+            ></textarea>
+            
+            <div class="composer-toolbar">
+              <div class="toolbar-left">
+                <span class="char-count" id="charCount">0 / 6000</span>
+                <span class="meta-hint desktop-only">Shift + Enter for new line • Enter to send</span>
+              </div>
+              
+              <div class="toolbar-right">
+                <button type="button" class="btn-mic" id="voiceInputBtn" title="Speak message">
+                  <i data-lucide="mic" id="micIcon"></i>
+                </button>
+                <button type="submit" class="btn-send" id="sendBtn" title="Send message" disabled>
+                  <span>Send</span>
+                  <i data-lucide="arrow-up-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div class="composer-disclaimer">
+          <span>Zayd is an AI Concierge powered by NADI's Supabase Edge platform & DeepSeek v4.1. Responses reflect NADI integration principles.</span>
+        </div>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- Settings & Diagnostics Modal -->
+  <div class="modal-backdrop hidden" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i data-lucide="sliders" class="accent-icon"></i>
+          <h3>Settings & Diagnostics</h3>
+        </div>
+        <button class="btn-icon" id="closeSettingsBtn"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="settings-group">
+          <label class="settings-label">Active Conversation ID</label>
+          <div class="code-box-row">
+            <code id="currentConvIdDisplay">None (Start a message)</code>
+            <button class="btn-ghost-sm" id="copyConvIdBtn" title="Copy ID">
+              <i data-lucide="copy"></i>
+            </button>
+          </div>
+          <span class="settings-hint">Unique session tracker stored on Supabase <code>conversations</code> table.</span>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Edge Function Endpoint</label>
+          <div class="code-box-row">
+            <code id="endpointDisplay">https://axyxymxrxyrpcnjfnrev.supabase.co/functions/v1/nadi-chat</code>
+          </div>
+          <span class="settings-hint">Deno Serverless Edge Runtime deployed with verified CORS headers.</span>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Bot Slug Selector</label>
+          <div class="select-wrapper">
+            <select id="botSlugSelect" class="form-select">
+              <option value="zayd" selected>zayd (Zayd - NADI AI Concierge)</option>
+              <option value="nadi">nadi (NADI Assistant)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Connection Health Check</label>
+          <button class="btn-secondary" id="testConnectionBtn">
+            <i data-lucide="activity"></i>
+            <span>Ping Backend Endpoint</span>
+          </button>
+          <div class="ping-status-result hidden" id="pingResult"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary" id="saveSettingsBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
