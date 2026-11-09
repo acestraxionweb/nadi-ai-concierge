@@ -82,10 +82,23 @@ html, body {
   gap: 8px;
 }
 
-.header-nadi-logo {
-  width: 22px;
+.header-logo-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.header-nadi-img {
+  width: 100%;
   height: auto;
-  opacity: 0.9;
+  display: block;
+  object-fit: contain;
 }
 
 .model-title {
@@ -152,11 +165,24 @@ html, body {
   margin-bottom: 14px;
 }
 
-.empty-nadi-logo {
-  width: 68px;
+.logo-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  padding: 8px;
+}
+
+.nadi-brand-img {
+  width: 100%;
   height: auto;
-  opacity: 0.95;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  display: block;
+  object-fit: contain;
 }
 
 .empty-title {
