@@ -1,5 +1,5 @@
 /**
- * Zayd — Minimal ChatGPT-style UI
+ * Zayd — Minimal ChatGPT-style UI (Compact & Embedded)
  * Client Logic
  */
 
@@ -7,23 +7,24 @@ const CONFIG = {
   ENDPOINT: 'https://axyxymxrxyrpcnjfnrev.supabase.co/functions/v1/nadi-chat',
   BOT_SLUG: 'zayd',
   STORAGE_KEYS: {
-    SESSIONS: 'nadi_chat_sessions',
-    ACTIVE_ID: 'nadi_chat_active_id'
+    CONVERSATION_ID: 'nadi_chat_conv_id',
+    MESSAGES: 'nadi_chat_messages'
   }
 };
 
 class MinimalChatApp {
   constructor() {
-    this.sessions = this.loadSessions();
-    this.activeSessionId = localStorage.getItem(CONFIG.STORAGE_KEYS.ACTIVE_ID) || null;
+    this.conversationId = localStorage.getItem(CONFIG.STORAGE_KEYS.CONVERSATION_ID) || null;
+    this.messages = this.loadMessages();
     this.isGenerating = false;
 
     this.initElements();
     this.initEventListeners();
-    this.renderHistoryList();
 
-    if (this.activeSessionId && this.sessions[this.activeSessionId]) {
-      this.loadSession(this.activeSessionId);
+    if (this.messages.length > 0) {
+      this.showEmptyState(false);
+      this.messages.forEach(msg => this.renderMessage(msg, false));
+      this.scrollToBottom(false);
     } else {
       this.showEmptyState(true);
     }
@@ -32,14 +33,6 @@ class MinimalChatApp {
   }
 
   initElements() {
-    this.sidebar = document.getElementById('sidebar');
-    this.sidebarOverlay = document.getElementById('sidebarOverlay');
-    this.sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
-    this.sidebarOpenBtn = document.getElementById('sidebarOpenBtn');
-    this.newChatBtn = document.getElementById('newChatBtn');
-    this.newChatHeaderBtn = document.getElementById('newChatHeaderBtn');
-    this.historyList = document.getElementById('historyList');
-
     this.messagesContainer = document.getElementById('messagesContainer');
     this.emptyState = document.getElementById('emptyState');
     this.messagesFeed = document.getElementById('messagesFeed');
@@ -47,18 +40,15 @@ class MinimalChatApp {
 
     this.messageInput = document.getElementById('messageInput');
     this.sendBtn = document.getElementById('sendBtn');
+    this.newChatHeaderBtn = document.getElementById('newChatHeaderBtn');
     this.toastContainer = document.getElementById('toastContainer');
   }
 
   initEventListeners() {
-    // Sidebar toggle
-    this.sidebarCollapseBtn.addEventListener('click', () => this.toggleSidebar(false));
-    this.sidebarOpenBtn.addEventListener('click', () => this.toggleSidebar(true));
-    this.sidebarOverlay.addEventListener('click', () => this.toggleSidebar(false));
-
-    // New Chat
-    this.newChatBtn.addEventListener('click', () => this.startNewChat());
-    this.newChatHeaderBtn.addEventListener('click', () => this.startNewChat());
+    // New Chat Header Button
+    if (this.newChatHeaderBtn) {
+      this.newChatHeaderBtn.addEventListener('click', () => this.startNewChat());
+    }
 
     // Input handlers
     this.messageInput.addEventListener('input', () => this.handleInputChange());
@@ -86,82 +76,40 @@ class MinimalChatApp {
     });
   }
 
-  toggleSidebar(open) {
-    if (window.innerWidth <= 768) {
-      if (open) {
-        this.sidebar.classList.add('open');
-        this.sidebarOverlay.classList.add('active');
-      } else {
-        this.sidebar.classList.remove('open');
-        this.sidebarOverlay.classList.remove('active');
-      }
-    } else {
-      this.sidebar.classList.toggle('collapsed', !open);
-    }
-  }
-
   handleInputChange() {
     const val = this.messageInput.value.trim();
     this.sendBtn.disabled = val.length === 0 || this.isGenerating;
 
     // Auto-grow textarea
     this.messageInput.style.height = 'auto';
-    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 200) + 'px';
+    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 160) + 'px';
   }
 
-  loadSessions() {
+  loadMessages() {
     try {
-      return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.SESSIONS)) || {};
+      return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.MESSAGES)) || [];
     } catch {
-      return {};
+      return [];
     }
   }
 
-  saveSessions() {
-    localStorage.setItem(CONFIG.STORAGE_KEYS.SESSIONS, JSON.stringify(this.sessions));
-  }
-
-  getActiveSession() {
-    if (!this.activeSessionId) return null;
-    return this.sessions[this.activeSessionId] || null;
+  saveMessages() {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.MESSAGES, JSON.stringify(this.messages));
+    if (this.conversationId) {
+      localStorage.setItem(CONFIG.STORAGE_KEYS.CONVERSATION_ID, this.conversationId);
+    }
   }
 
   startNewChat() {
-    this.activeSessionId = 'chat_' + Date.now();
-    this.sessions[this.activeSessionId] = {
-      id: this.activeSessionId,
-      conversationId: null,
-      title: 'New chat',
-      createdAt: new Date().toISOString(),
-      messages: []
-    };
-    localStorage.setItem(CONFIG.STORAGE_KEYS.ACTIVE_ID, this.activeSessionId);
-    this.saveSessions();
-    this.renderHistoryList();
+    this.conversationId = null;
+    this.messages = [];
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.CONVERSATION_ID);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.MESSAGES);
     this.messagesFeed.innerHTML = '';
     this.showEmptyState(true);
     this.messageInput.value = '';
     this.handleInputChange();
-    this.toggleSidebar(false);
-  }
-
-  loadSession(sessionId) {
-    const session = this.sessions[sessionId];
-    if (!session) return;
-    this.activeSessionId = sessionId;
-    localStorage.setItem(CONFIG.STORAGE_KEYS.ACTIVE_ID, sessionId);
-
-    this.messagesFeed.innerHTML = '';
-    if (session.messages.length === 0) {
-      this.showEmptyState(true);
-    } else {
-      this.showEmptyState(false);
-      session.messages.forEach(msg => this.renderMessage(msg, false));
-    }
-
-    this.renderHistoryList();
-    this.toggleSidebar(false);
-    this.scrollToBottom();
+    this.showToast('New session started');
   }
 
   showEmptyState(show) {
@@ -172,53 +120,10 @@ class MinimalChatApp {
     }
   }
 
-  renderHistoryList() {
-    this.historyList.innerHTML = '';
-    const sorted = Object.values(this.sessions).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    sorted.forEach(session => {
-      const item = document.createElement('div');
-      item.className = `history-item ${session.id === this.activeSessionId ? 'active' : ''}`;
-      item.innerHTML = `
-        <span class="history-title">${session.title}</span>
-        <button class="history-del-btn" title="Delete"><i data-lucide="trash-2"></i></button>
-      `;
-
-      item.querySelector('.history-title').addEventListener('click', () => {
-        this.loadSession(session.id);
-      });
-
-      item.querySelector('.history-del-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        delete this.sessions[session.id];
-        this.saveSessions();
-        if (this.activeSessionId === session.id) {
-          const remaining = Object.keys(this.sessions);
-          if (remaining.length > 0) {
-            this.loadSession(remaining[0]);
-          } else {
-            this.startNewChat();
-          }
-        } else {
-          this.renderHistoryList();
-        }
-      });
-
-      this.historyList.appendChild(item);
-    });
-
-    lucide.createIcons();
-  }
-
   async submitMessage() {
     const text = this.messageInput.value.trim();
     if (!text || this.isGenerating) return;
 
-    if (!this.activeSessionId || !this.sessions[this.activeSessionId]) {
-      this.startNewChat();
-    }
-
-    const session = this.getActiveSession();
     this.showEmptyState(false);
     this.messageInput.value = '';
     this.handleInputChange();
@@ -228,27 +133,19 @@ class MinimalChatApp {
       role: 'user',
       content: text
     };
-    session.messages.push(userMsg);
-
-    // Title assignment on 1st prompt
-    if (session.messages.length === 1) {
-      session.title = text.length > 28 ? text.substring(0, 28) + '...' : text;
-    }
-
+    this.messages.push(userMsg);
     this.renderMessage(userMsg, true);
-    this.saveSessions();
-    this.renderHistoryList();
+    this.saveMessages();
 
-    // Send to Edge Function
+    // Call Supabase Edge Function
     await this.callEdgeFunction(text);
   }
 
   async callEdgeFunction(text) {
-    const session = this.getActiveSession();
     this.isGenerating = true;
     this.sendBtn.disabled = true;
     this.typingIndicator.classList.remove('hidden');
-    this.scrollToBottom();
+    this.scrollToBottom(true);
 
     try {
       const payload = {
@@ -256,8 +153,8 @@ class MinimalChatApp {
         bot_slug: CONFIG.BOT_SLUG
       };
 
-      if (session.conversationId) {
-        payload.conversation_id = session.conversationId;
+      if (this.conversationId) {
+        payload.conversation_id = this.conversationId;
       }
 
       const res = await fetch(CONFIG.ENDPOINT, {
@@ -274,7 +171,7 @@ class MinimalChatApp {
       const data = await res.json();
 
       if (data.conversation_id) {
-        session.conversationId = data.conversation_id;
+        this.conversationId = data.conversation_id;
       }
 
       const assistantMsg = {
@@ -282,8 +179,8 @@ class MinimalChatApp {
         content: data.reply || 'No response.'
       };
 
-      session.messages.push(assistantMsg);
-      this.saveSessions();
+      this.messages.push(assistantMsg);
+      this.saveMessages();
       this.renderMessage(assistantMsg, true);
 
     } catch (err) {
@@ -291,13 +188,13 @@ class MinimalChatApp {
         role: 'assistant',
         content: `Error: ${err.message}. Please try again.`
       };
-      session.messages.push(errorMsg);
+      this.messages.push(errorMsg);
       this.renderMessage(errorMsg, true);
     } finally {
       this.isGenerating = false;
       this.sendBtn.disabled = this.messageInput.value.trim().length === 0;
       this.typingIndicator.classList.add('hidden');
-      this.scrollToBottom();
+      this.scrollToBottom(true);
     }
   }
 
@@ -359,7 +256,7 @@ class MinimalChatApp {
     lucide.createIcons();
 
     if (scroll) {
-      this.scrollToBottom();
+      this.scrollToBottom(true);
     }
   }
 
@@ -371,10 +268,13 @@ class MinimalChatApp {
     setTimeout(() => toast.remove(), 2500);
   }
 
-  scrollToBottom() {
-    setTimeout(() => {
-      this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-    }, 40);
+  scrollToBottom(smooth = true) {
+    requestAnimationFrame(() => {
+      this.messagesContainer.scrollTo({
+        top: this.messagesContainer.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+    });
   }
 
   escapeHtml(str) {

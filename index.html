@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zayd — NADI AI Concierge</title>
-  <meta name="description" content="Minimal AI Concierge for NADI.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23212121'/><path d='M25 75V25h12l25 35V25h13v50H63L38 40v35H25z' fill='%23C6F36B'/></svg>">
+  <meta name="description" content="NADI AI Concierge">
+  <link rel="icon" type="image/svg+xml" href="assets/nadi-logo-white.svg">
   
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,122 +25,80 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="chatgpt-layout">
+  <div class="chat-main">
     
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-top">
-        <button class="btn-sidebar-toggle" id="sidebarCollapseBtn" title="Close sidebar">
-          <i data-lucide="panel-left-close"></i>
-        </button>
-        <button class="btn-new-chat" id="newChatBtn" title="New chat">
+    <!-- Minimal Clean Header -->
+    <header class="chat-header">
+      <div class="header-left">
+        <img src="assets/nadi-logo-white.svg" alt="NADI Logo" class="header-nadi-logo">
+        <span class="model-title">Zayd</span>
+        <span class="model-badge">AI Concierge</span>
+      </div>
+
+      <div class="header-right">
+        <button class="btn-icon" id="newChatHeaderBtn" title="New chat">
           <i data-lucide="square-pen"></i>
         </button>
       </div>
+    </header>
 
-      <div class="sidebar-content">
-        <div class="history-section-title">Chats</div>
-        <div class="history-list" id="historyList">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-
-      <div class="sidebar-bottom">
-        <div class="brand-user-pill">
-          <div class="brand-mark">N</div>
-          <div class="brand-meta">
-            <span class="brand-name">NADI AI</span>
-            <span class="brand-sub">Zayd Concierge</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Sidebar Overlay for mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Main Content Area -->
-    <div class="chat-main">
+    <!-- Scrollable Chat Stream (Hidden Scrollbar) -->
+    <div class="messages-container" id="messagesContainer">
       
-      <!-- Minimal Header -->
-      <header class="chat-header">
-        <div class="header-left">
-          <button class="btn-icon" id="sidebarOpenBtn" title="Open sidebar">
-            <i data-lucide="panel-left-open"></i>
-          </button>
-          <div class="model-selector">
-            <span class="model-title">Zayd</span>
-            <span class="model-badge">NADI Concierge</span>
-          </div>
+      <!-- Minimal Empty State -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-logo">
+          <img src="assets/nadi-logo-white.svg" alt="NADI Logo" class="empty-nadi-logo">
         </div>
-
-        <div class="header-right">
-          <button class="btn-icon" id="newChatHeaderBtn" title="New chat">
-            <i data-lucide="square-pen"></i>
-          </button>
-        </div>
-      </header>
-
-      <!-- Scrollable Chat Stream -->
-      <div class="messages-container" id="messagesContainer">
+        <h1 class="empty-title">What would you like to explore?</h1>
         
-        <!-- Minimal Empty State (ChatGPT style) -->
-        <div class="empty-state" id="emptyState">
-          <div class="empty-logo">
-            <div class="logo-circle">Z</div>
-          </div>
-          <h1 class="empty-title">What would you like to explore?</h1>
-          <p class="empty-subtitle">I'm Zayd, NADI's AI Concierge. I help businesses understand how to connect AI agents around their existing workflows.</p>
-          
-          <div class="quick-prompts-grid">
-            <button class="quick-prompt-btn" data-prompt="How does NADI integrate AI into existing workflows?">
-              <span>How does NADI integrate AI into existing workflows?</span>
-            </button>
-            <button class="quick-prompt-btn" data-prompt="What business operations can NADI automate?">
-              <span>What business operations can NADI automate?</span>
-            </button>
-            <button class="quick-prompt-btn" data-prompt="How do human approvals work in your agent systems?">
-              <span>How do human approvals work in your systems?</span>
-            </button>
-            <button class="quick-prompt-btn" data-prompt="I want to discuss an AI integration project.">
-              <span>I want to discuss an AI integration project</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Chat Messages -->
-        <div class="messages-thread" id="messagesFeed"></div>
-
-        <!-- Typing Indicator -->
-        <div class="typing-row hidden" id="typingIndicator">
-          <div class="typing-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ChatGPT-style Bottom Composer -->
-      <div class="composer-area">
-        <div class="composer-box">
-          <textarea 
-            id="messageInput" 
-            class="composer-textarea" 
-            placeholder="Message Zayd..." 
-            rows="1"
-            maxlength="6000"
-            autofocus
-          ></textarea>
-          <button type="button" class="btn-send-round" id="sendBtn" title="Send message" disabled>
-            <i data-lucide="arrow-up"></i>
+        <div class="quick-prompts-grid">
+          <button class="quick-prompt-btn" data-prompt="How does NADI integrate AI into existing workflows?">
+            <span>How does NADI integrate AI into existing workflows?</span>
+          </button>
+          <button class="quick-prompt-btn" data-prompt="What business operations can NADI automate?">
+            <span>What business operations can NADI automate?</span>
+          </button>
+          <button class="quick-prompt-btn" data-prompt="How do human approvals work in your systems?">
+            <span>How do human approvals work in your systems?</span>
+          </button>
+          <button class="quick-prompt-btn" data-prompt="I want to discuss an AI integration project.">
+            <span>I want to discuss an AI integration project</span>
           </button>
         </div>
-        <div class="composer-footnote">
-          <span>Zayd is an AI Concierge. Verify important integration details with NADI.</span>
-        </div>
       </div>
 
+      <!-- Chat Messages Thread -->
+      <div class="messages-thread" id="messagesFeed"></div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-row hidden" id="typingIndicator">
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minimal Bottom Composer -->
+    <div class="composer-area">
+      <div class="composer-box">
+        <textarea 
+          id="messageInput" 
+          class="composer-textarea" 
+          placeholder="Message Zayd..." 
+          rows="1"
+          maxlength="6000"
+          autofocus
+        ></textarea>
+        <button type="button" class="btn-send-round" id="sendBtn" title="Send message" disabled>
+          <i data-lucide="arrow-up"></i>
+        </button>
+      </div>
+      <div class="composer-footnote">
+        <span>Zayd is an AI Concierge. Verify important integration details with NADI.</span>
+      </div>
     </div>
 
   </div>
